@@ -67,7 +67,7 @@ if (!release) {
 }
 
 const releaseID = release.id;
-const attachmentResponse = await api('GET', `${releasePath()}/${releaseID}/attachments`);
+const attachmentResponse = await api('GET', `${releasePath()}/${releaseID}/attach_files`);
 const attachments = Array.isArray(attachmentResponse) ? attachmentResponse : (attachmentResponse?.attachments || []);
 const existing = new Map();
 for (const attachment of attachments) {
@@ -87,10 +87,10 @@ for (const name of fs.readdirSync(ASSET_DIR).sort()) {
       continue;
     }
     const attachmentID = current.id || current.attachment_id;
-    await api('DELETE', `${releasePath()}/${releaseID}/attachments/${attachmentID}`);
+    await api('DELETE', `${releasePath()}/${releaseID}/attach_files/${attachmentID}`);
     console.log(`Replacing asset ${name}`);
   }
-  await api('POST', `${releasePath()}/${releaseID}/attachments`, { filePath });
+  await api('POST', `${releasePath()}/${releaseID}/attach_files`, { filePath });
   console.log(`Uploaded ${name} (${size} bytes)`);
 }
 
