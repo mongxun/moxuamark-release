@@ -77,6 +77,11 @@ if (!release) {
 }
 
 const releaseID = release.id;
+if (process.env.CREATE_ONLY === 'true') {
+  console.log(`Gitee release is ready: https://gitee.com/${OWNER}/${REPO}/releases/tag/${TAG}`);
+  process.exit(0);
+}
+
 const attachmentResponse = await api('GET', `${releasePath()}/${releaseID}/attach_files`);
 const attachments = Array.isArray(attachmentResponse) ? attachmentResponse : (attachmentResponse?.attachments || []);
 const existing = new Map();

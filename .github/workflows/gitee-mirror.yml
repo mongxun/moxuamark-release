@@ -38,7 +38,7 @@ jobs:
           test -f mirror/SHA256SUMS.txt
           (cd mirror && sha256sum -c SHA256SUMS.txt)
 
-      - name: Create Gitee release and upload assets
+      - name: Ensure Gitee release exists
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
           GITEE_OWNER: scotttttttmr
@@ -46,7 +46,23 @@ jobs:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           RELEASE_NAME: ${{ github.event.release.name || inputs.tag }}
           RELEASE_BODY: ${{ github.event.release.body || 'Automated mirror of the corresponding GitHub release.' }}
+          CREATE_ONLY: 'true'
         run: node scripts/mirror_to_gitee.mjs
+
+      - name: Upload assets with official Gitee CLI
+        timeout-minutes: 8
+        shell: bash
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          npm install --global gitee-release-cli@2.1.1
+          git remote set-url origin https://gitee.com/scotttttttmr/moxuamark-release.git
+          gitee-release config accessToken "$GITEE_TOKEN"
+          for asset in mirror/*; do
+            gitee-release assets upload "$asset" --target "${RELEASE_TAG#v}"
+          done
 
       - name: Verify public Gitee downloads
         shell: bash
