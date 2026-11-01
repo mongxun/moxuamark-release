@@ -16,6 +16,8 @@ Never put the Gitee token in source files, commit logs, issues, or chat.
 
 ## Automatic operation
 
+Create the GitHub release as a **draft**, upload both assets and verify their sizes/checksums first. Publish only after the assets are complete; publishing an empty release and attaching assets afterwards races this workflow and can fail with `no assets to download`.
+
 Publishing a GitHub release triggers the workflow. It:
 
 1. Downloads the installer and `SHA256SUMS.txt` from the GitHub release.

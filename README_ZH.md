@@ -94,7 +94,7 @@
 
 ### 1. 下载
 
-从 [GitHub Releases](https://github.com/mongxun/moxuamark-release/releases/latest) 下载最新 Windows x64 安装包。
+从 [Gitee Release（国内镜像）](https://gitee.com/scotttttttmr/moxuamark-release/releases/latest) 或 [GitHub Releases（主源）](https://github.com/mongxun/moxuamark-release/releases/latest) 下载最新 Windows x64 安装包。两个渠道的同名安装包应具有一致的 SHA-256。
 
 每个版本应提供发布说明和 SHA256。可在 PowerShell 中核对：
 
