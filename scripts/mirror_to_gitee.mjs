@@ -1,5 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 
 const BASE_URL = 'https://gitee.com/api/v5';
 const TOKEN = process.env.GITEE_TOKEN;
@@ -20,17 +24,16 @@ async function api(method, apiPath, { fields = {}, filePath } = {}) {
   let body;
 
   if (filePath) {
-    const boundary = `----MoxuaMark${Math.random().toString(16).slice(2)}`;
-    const chunks = [];
-    for (const [name, value] of Object.entries({ ...fields, access_token: TOKEN })) {
-      chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`));
-    }
-    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${path.basename(filePath)}"\r\nContent-Type: application/octet-stream\r\n\r\n`));
-    chunks.push(fs.readFileSync(filePath));
-    chunks.push(Buffer.from(`\r\n--${boundary}--\r\n`));
-    body = Buffer.concat(chunks);
-    headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
-    headers['Content-Length'] = String(body.length);
+    const { stdout } = await execFileAsync('curl', [
+      '--fail-with-body', '--silent', '--show-error',
+      '--connect-timeout', '30', '--max-time', '300', '--retry', '1', '--retry-all-errors',
+      '--request', 'POST',
+      '--header', 'Expect:',
+      '--form', `access_token=${TOKEN}`,
+      '--form', `file=@${filePath};type=application/octet-stream`,
+      url.toString()
+    ], { maxBuffer: 10 * 1024 * 1024 });
+    return stdout.trim() ? JSON.parse(stdout) : {};
   } else if (method === 'GET' || method === 'DELETE') {
     url.search = new URLSearchParams({ ...fields, access_token: TOKEN }).toString();
   } else {
@@ -82,7 +85,7 @@ for (const attachment of attachments) {
   if (name) existing.set(name, attachment);
 }
 
-for (const name of fs.readdirSync(ASSET_DIR).sort()) {
+for (const name of fs.readdirSync(ASSET_DIR).sort((a, b) => a === 'SHA256SUMS.txt' ? -1 : b === 'SHA256SUMS.txt' ? 1 : a.localeCompare(b))) {
   const filePath = path.join(ASSET_DIR, name);
   if (!fs.statSync(filePath).isFile()) continue;
   const size = fs.statSync(filePath).size;
