@@ -1,0 +1,9 @@
+{
+  "name": "moxuamark-release",
+  "version": "1.0.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git@gitee.com:scotttttttmr/moxuamark-release.git"
+  }
+}
