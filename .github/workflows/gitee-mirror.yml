@@ -1,0 +1,63 @@
+name: Mirror release to Gitee
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag to mirror
+        required: true
+        default: v0.52.6
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: echo "tag=${{ github.event.release.tag_name || inputs.tag }}" >> "$GITHUB_OUTPUT"
+
+      - name: Download and verify GitHub release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p mirror
+          gh release download "$TAG" --repo "${{ github.repository }}" --pattern "MoxuaMark-*-setup.exe" --pattern "SHA256SUMS.txt" --dir mirror
+          test -n "$(find mirror -maxdepth 1 -name 'MoxuaMark-*-setup.exe' -print -quit)"
+          test -f mirror/SHA256SUMS.txt
+          (cd mirror && sha256sum -c SHA256SUMS.txt)
+
+      - name: Create Gitee release and upload assets
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_OWNER: scotttttttmr
+          GITEE_REPO: moxuamark-release
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_NAME: ${{ github.event.release.name || inputs.tag }}
+          RELEASE_BODY: ${{ github.event.release.body || 'Automated mirror of the corresponding GitHub release.' }}
+        run: node scripts/mirror_to_gitee.mjs
+
+      - name: Verify public Gitee downloads
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p verify
+          for asset in mirror/*; do
+            name="$(basename "$asset")"
+            curl --fail --location --retry 3 --output "verify/$name" "https://gitee.com/scotttttttmr/moxuamark-release/releases/download/$RELEASE_TAG/$name"
+          done
+          cp mirror/SHA256SUMS.txt verify/SHA256SUMS.txt
+          (cd verify && sha256sum -c SHA256SUMS.txt)
