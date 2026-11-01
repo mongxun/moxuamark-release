@@ -27,6 +27,8 @@ gitee-release assets upload <SHA256SUMS.txt-path> --target <version-without-v>
 
 The local CLI configuration stores the repository-scoped token on the developer machine. AI release automation must use this configured CLI, then download the public Gitee asset and verify SHA-256 again before updating the website.
 
+When creating or editing bilingual release notes through an API, send UTF-8 request bodies. On Windows PowerShell 5.1, pass `[Text.Encoding]::UTF8.GetBytes($json)` rather than a JSON string. For Gitee form updates, reuse the Node `URLSearchParams + fetch` path from `scripts/mirror_to_gitee.mjs`, include the required `tag_name` and `name` fields, and read the public release page back to verify the Chinese text.
+
 The GitHub Actions workflow remains available only as a manual fallback. Automatic `release` triggers are disabled so they cannot create empty or unverified mirrors. Do not enable them unless the cloud upload path has passed an end-to-end test.
 
 v0.52.14 and v0.52.15 were successfully uploaded through this local path, downloaded publicly, and verified against GitHub's SHA-256.
