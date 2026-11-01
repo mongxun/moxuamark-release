@@ -29,4 +29,4 @@ The local CLI configuration stores the repository-scoped token on the developer 
 
 The GitHub Actions workflow remains available only as a manual fallback. Automatic `release` triggers are disabled so they cannot create empty or unverified mirrors. Do not enable them unless the cloud upload path has passed an end-to-end test.
 
-v0.52.14 was successfully uploaded through this local path, downloaded publicly, and verified against GitHub's SHA-256.
+v0.52.14 and v0.52.15 were successfully uploaded through this local path, downloaded publicly, and verified against GitHub's SHA-256.
