@@ -20,10 +20,17 @@ async function api(method, apiPath, { fields = {}, filePath } = {}) {
   let body;
 
   if (filePath) {
-    body = new FormData();
-    for (const [name, value] of Object.entries(fields)) body.append(name, String(value));
-    body.append('access_token', TOKEN);
-    body.append('file', new Blob([fs.readFileSync(filePath)], { type: 'application/octet-stream' }), path.basename(filePath));
+    const boundary = `----MoxuaMark${Math.random().toString(16).slice(2)}`;
+    const chunks = [];
+    for (const [name, value] of Object.entries({ ...fields, access_token: TOKEN })) {
+      chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`));
+    }
+    chunks.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${path.basename(filePath)}"\r\nContent-Type: application/octet-stream\r\n\r\n`));
+    chunks.push(fs.readFileSync(filePath));
+    chunks.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+    body = Buffer.concat(chunks);
+    headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
+    headers['Content-Length'] = String(body.length);
   } else if (method === 'GET' || method === 'DELETE') {
     url.search = new URLSearchParams({ ...fields, access_token: TOKEN }).toString();
   } else {
@@ -31,7 +38,7 @@ async function api(method, apiPath, { fields = {}, filePath } = {}) {
     headers['Content-Type'] = 'application/x-www-form-urlencoded';
   }
 
-  const response = await fetch(url, { method, headers, body });
+  const response = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(240000) });
   const text = await response.text();
   if (!response.ok) {
     const error = new Error(`Gitee API returned HTTP ${response.status}: ${text.slice(0, 500)}`);
