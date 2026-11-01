@@ -47,9 +47,12 @@ const releaseTag = encodeURIComponent(TAG);
 let release;
 try {
   release = await api('GET', `${releasePath()}/tags/${releaseTag}`);
-  console.log(`Using existing Gitee release ${TAG}`);
+  if (!release?.id) release = null;
 } catch (error) {
   if (error.status !== 404) throw error;
+  release = null;
+}
+if (!release) {
   release = await api('POST', releasePath(), {
     fields: {
       tag_name: TAG,
@@ -59,11 +62,13 @@ try {
     }
   });
   console.log(`Created Gitee release ${TAG}`);
+} else {
+  console.log(`Using existing Gitee release ${TAG}`);
 }
 
 const releaseID = release.id;
 const attachmentResponse = await api('GET', `${releasePath()}/${releaseID}/attachments`);
-const attachments = Array.isArray(attachmentResponse) ? attachmentResponse : (attachmentResponse.attachments || []);
+const attachments = Array.isArray(attachmentResponse) ? attachmentResponse : (attachmentResponse?.attachments || []);
 const existing = new Map();
 for (const attachment of attachments) {
   const name = attachment.name || attachment.file_name || attachment.filename;
