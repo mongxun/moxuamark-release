@@ -14,16 +14,19 @@ GitHub Releases remains the primary release channel. The workflow in `.github/wo
 
 Never put the Gitee token in source files, commit logs, issues, or chat.
 
-## Automatic operation
+## Reliable release path
 
-Create the GitHub release as a **draft**, upload both assets and verify their sizes/checksums first. Publish only after the assets are complete; publishing an empty release and attaching assets afterwards races this workflow and can fail with `no assets to download`.
+Create the GitHub release as a **draft**, upload both assets and verify their sizes/checksums first. Publish only after the assets are complete.
 
-Publishing a GitHub release triggers the workflow. It:
+The GitHub-hosted `ubuntu-latest` route to Gitee's attachment endpoint repeatedly timed out on the ~50 MB installer. Use the local, China-network path for production mirroring:
 
-1. Downloads the installer and `SHA256SUMS.txt` from the GitHub release.
-2. Verifies the checksum before uploading.
-3. Creates or reuses the matching Gitee release.
-4. Uploads new assets and skips unchanged assets.
-5. Downloads the public Gitee assets and verifies their checksums again.
+```powershell
+gitee-release assets upload <installer-path> --target <version-without-v>
+gitee-release assets upload <SHA256SUMS.txt-path> --target <version-without-v>
+```
 
-To mirror an existing release manually, run **Actions → Mirror release to Gitee → Run workflow** and enter its tag.
+The local CLI configuration stores the repository-scoped token on the developer machine. AI release automation must use this configured CLI, then download the public Gitee asset and verify SHA-256 again before updating the website.
+
+The GitHub Actions workflow remains available only as a manual fallback. Automatic `release` triggers are disabled so they cannot create empty or unverified mirrors. Do not enable them unless the cloud upload path has passed an end-to-end test.
+
+v0.52.14 was successfully uploaded through this local path, downloaded publicly, and verified against GitHub's SHA-256.
