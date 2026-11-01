@@ -146,6 +146,8 @@ Only new entries are blocked after the free limit is reached; existing data rema
 
 **Checkout is coming soon.** Purchase links will be enabled only after real payment, delivery, refund/reissue and settlement flows pass acceptance. Sponsorship is voluntary and does not include a Pro license.
 
+International sponsorship through Ko-fi will be added after the account and settlement verification is complete. It will remain separate from Pro purchases and will not include feature entitlements.
+
 ## Roadmap
 
 ### Near term: a more complete file-management workflow
